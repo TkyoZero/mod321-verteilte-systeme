@@ -1,0 +1,13 @@
+services:
+  distance-sensor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    privileged: true
+
+    command: ["python", "main.py"]
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./distance_sensor.py:/usr/src/app/distance_sensor.py
+      - ./main.py:/usr/src/app/main.py
