@@ -1,0 +1,13 @@
+services:
+  node-exporter:
+    image: prom/node-exporter
+    volumes:
+      - /:/host:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/host'
+      - '--collector.filesystem.mount-points-exclude=^/(dev|proc|sys|host/dev|host/proc|host/sys|var/lib/docker/.+)($$|/)'
+      - '--collector.wifi'
+    network_mode: host
+    restart: always

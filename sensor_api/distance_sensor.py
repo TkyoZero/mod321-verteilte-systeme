@@ -3,7 +3,6 @@ import RPi.GPIO as GPIO
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
-GPIO.cleanup()
 
 
 class DistanceSensor:
@@ -29,6 +28,7 @@ class DistanceSensor:
                 raise TimeoutError("Ultrasonic sensor did not receive an echo")
 
         start_time = time.time()
+        stop_time = start_time
         timeout = time.monotonic() + 0.1
 
         while GPIO.input(self.echo_pin) == 1:
