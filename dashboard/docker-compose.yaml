@@ -1,0 +1,9 @@
+services:
+  dashboard:
+    image: nginx
+    volumes:
+      - ./:/usr/share/nginx/html/
+    ports:
+      - 8090:80
+    command: nginx -g "daemon off;"
+    restart: always

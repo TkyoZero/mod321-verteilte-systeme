@@ -9,6 +9,8 @@ import threading
 import json
 import os
 
+import paho.mqtt.client as mqtt
+
 air_sensor = AirSensor()
 light_sensor = LightSensor()
 distance_sensor = DistanceSensor()
@@ -18,6 +20,22 @@ sensor_lock = threading.Lock()
 
 host = "0.0.0.0"
 port = 8080
+
+# MQTT client
+def on_connect(client, userdata, flags, reason_code, properties):
+    print(f"Connected to MQTT broker with reason code {reason_code}")
+    client.publish("mondaymorning/up", "true", qos=2, retain=True)
+
+def on_message(client, userdata, msg: object):
+    print(f"Received message on topic {msg.topic}: {msg.payload.decode()}")
+
+mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+mqtt_client.on_connect = on_connect
+mqtt_client.on_message = on_message
+# If the connection drops, the broker sends "false" automatically
+mqtt_client.will_set("mondaymorning/up", "false", qos=2, retain=True)
+mqtt_client.connect_async("172.17.0.1", 1883, 60)
+mqtt_client.loop_start()
 
 sleep(1)
 
@@ -167,10 +185,24 @@ class Server(BaseHTTPRequestHandler):
             if not self.response_started:
                 self.sendJSON({"status": "error", "message": str(e)}, code=500)
 
+def read_distance_sensor(delay):
+    while True:
+        try:
+            with sensor_lock:
+                distance = distance_sensor.read_distance()
+            mqtt_client.publish("mondaymorning/sensor/distance", distance, qos=1)
+        except Exception as error:
+            print(f"Distance sensor failed: {error}")
+        sleep(delay)
+
 
 def main():
     web_server = ThreadingHTTPServer((host, port), Server)
     print(f"Server started and listen to {host}:{port}")
+
+    distanceSensorThread = threading.Thread(target=read_distance_sensor, args=(1,), daemon=True)
+
+    distanceSensorThread.start()
 
     try:
         web_server.serve_forever()

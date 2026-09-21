@@ -4,11 +4,7 @@ services:
     privileged: true
     command: ['python', '-u', 'main.py']
     volumes:
-      - ./air_sensor.py:/usr/src/app/air_sensor.py
-      - ./distance_sensor.py:/usr/src/app/distance_sensor.py
-      - ./light_sensor.py:/usr/src/app/light_sensor.py
-      - ./main.py:/usr/src/app/main.py
-      - ./index.html:/usr/src/app/index.html
+      - .:/usr/src/app/
     ports:
       - 8080:8080
     labels:

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+</head>
+
+<body>
+    <h1>Dashboard</h1>
+    <h2>MQTT-Broker</h2>
+    <p>Distance Sensor: <span id="distanceSensorValue"></span> cm</p>
+
+    <script src="mqtt.min.js"></script>
+    <script>
+        console.log(mqtt);
+        const broker = `ws://${window.location.hostname}:9001`;
+
+        const distanceSensorValue = document.getElementById("distanceSensorValue");
+
+        const mqttClient = mqtt.connect(broker, {});
+        mqttClient.on("connect", () => {
+            console.log("Connected to MQTT broker");
+            mqttClient.subscribe("mondaymorning/#", { qos: 1 }, err => {
+                if (err) {
+                    console.error("Subscription error:", err);
+                } else {
+                    console.log("Subscribed to topic: mondaymorning/#");
+                }
+            });
+        });
+
+        mqttClient.on("message", (topic, message) => {
+            console.log(`Received message on topic ${topic}: ${message.toString()}`);
+            switch (topic) {
+                case "mondaymorning/sensor/distance":
+                    distanceSensorValue.textContent = parseFloat(message);
+                    break;
+                default:
+                    console.warn(`Unhandled topic: ${topic}`);
+            }
+            // You can update your dashboard UI here based on the received messages
+        });
+    </script>
+</body>
+
+</html>
