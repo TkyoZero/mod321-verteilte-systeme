@@ -1,6 +1,8 @@
 services:
   webserver:
-    build: .
+    build:
+      context: .
+      dockerfile: lgpio.Dockerfile
     privileged: true
     command: ['python', '-u', 'main.py']
     volumes:

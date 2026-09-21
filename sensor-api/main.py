@@ -1,8 +1,9 @@
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from time import sleep
-from air_sensor import AirSensor
-from light_sensor import LightSensor
-from distance_sensor import DistanceSensor
+from sensor.air_sensor import AirSensor
+from sensor.light_sensor import LightSensor
+from sensor.distance_sensor import DistanceSensor
+from sensor.touch_sensor import TouchSensor
 import mimetypes
 import textwrap
 import threading
@@ -14,6 +15,7 @@ import paho.mqtt.client as mqtt
 air_sensor = AirSensor()
 light_sensor = LightSensor()
 distance_sensor = DistanceSensor()
+touch_sensor = TouchSensor(11)
 
 # GPIO and I2C are shared hardware: only one thread may read at a time
 sensor_lock = threading.Lock()
@@ -24,7 +26,7 @@ port = 8080
 # MQTT client
 def on_connect(client, userdata, flags, reason_code, properties):
     print(f"Connected to MQTT broker with reason code {reason_code}")
-    client.publish("mondaymorning/up", "true", qos=2, retain=True)
+    client.publish("wangdak-pi/up", "true", qos=2, retain=True)
 
 def on_message(client, userdata, msg: object):
     print(f"Received message on topic {msg.topic}: {msg.payload.decode()}")
@@ -33,7 +35,7 @@ mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 mqtt_client.on_connect = on_connect
 mqtt_client.on_message = on_message
 # If the connection drops, the broker sends "false" automatically
-mqtt_client.will_set("mondaymorning/up", "false", qos=2, retain=True)
+mqtt_client.will_set("wangdak-pi/up", "false", qos=2, retain=True)
 mqtt_client.connect_async("172.17.0.1", 1883, 60)
 mqtt_client.loop_start()
 
@@ -190,10 +192,15 @@ def read_distance_sensor(delay):
         try:
             with sensor_lock:
                 distance = distance_sensor.read_distance()
-            mqtt_client.publish("mondaymorning/sensor/distance", distance, qos=1)
+            mqtt_client.publish("wangdak-pi/sensor/distance", distance, qos=1)
         except Exception as error:
             print(f"Distance sensor failed: {error}")
         sleep(delay)
+
+def handle_touch(is_touched):
+    is_touched = not is_touched  # Invert the value to match the desired logic
+    mqtt_client.publish("wangdak-pi/sensor/touch", is_touched, qos=1)
+    print("Touch detected!")
 
 
 def main():
@@ -203,6 +210,7 @@ def main():
     distanceSensorThread = threading.Thread(target=read_distance_sensor, args=(1,), daemon=True)
 
     distanceSensorThread.start()
+    touch_sensor.start(handle_touch)
 
     try:
         web_server.serve_forever()

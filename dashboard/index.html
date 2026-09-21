@@ -22,11 +22,11 @@
         const mqttClient = mqtt.connect(broker, {});
         mqttClient.on("connect", () => {
             console.log("Connected to MQTT broker");
-            mqttClient.subscribe("mondaymorning/#", { qos: 1 }, err => {
+            mqttClient.subscribe("wangdak-pi/#", { qos: 1 }, err => {
                 if (err) {
                     console.error("Subscription error:", err);
                 } else {
-                    console.log("Subscribed to topic: mondaymorning/#");
+                    console.log("Subscribed to topic: wangdak-pi/#");
                 }
             });
         });
@@ -34,7 +34,7 @@
         mqttClient.on("message", (topic, message) => {
             console.log(`Received message on topic ${topic}: ${message.toString()}`);
             switch (topic) {
-                case "mondaymorning/sensor/distance":
+                case "wangdak-pi/sensor/distance":
                     distanceSensorValue.textContent = parseFloat(message);
                     break;
                 default:
