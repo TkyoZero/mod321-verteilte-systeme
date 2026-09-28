@@ -1,0 +1,24 @@
+services:
+  webserver:
+    build:
+      context: .
+      dockerfile: lgpio.Dockerfile
+    privileged: true
+    command: ['python', '-u', 'sensor-api/main.py']
+    volumes:
+      - .:/usr/src/app/
+    ports:
+      - 5000:8080
+    labels:
+      logging_jobname: sensor-api
+    restart: always
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    volumes:
+      - './mosquitto.conf:/mosquitto/config/mosquitto.conf'
+      - 'mosquitto_data:/mosquitto/data'
+    restart: always
+
+volumes:
+    mosquitto_data:
